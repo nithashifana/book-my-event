@@ -6,6 +6,8 @@ const compareTime = require("../Util/compareTime");
 const formatDate = require("../Util/formatDate");
 const formatTime = require("../Util/formatTime");
 const isVenueFree = require("../Util/isVenueFree");
+const samedate = require("../Util/samedate");
+const sameTime = require("../Util/sameTime");
 
 module.exports.createEvent = async (req, res) => {
   try {
@@ -159,7 +161,7 @@ module.exports.updateEvent = async (req, res) => {
     if (!event) {
       return res.status(400).json({ message: "Event not present" });
     }
-    const Existven = await venueModel.findById(event.venue)
+    const Existven = await venueModel.findById(event.venue);
 
     title = title || event.title;
     description = description || event.description;
@@ -284,13 +286,75 @@ module.exports.deleteReg = async (req, res) => {
     if (!existEvent) {
       return res.status(400).json({ message: "Event doesnot exist" });
     }
-    existEvent.attendance.filter(
-      (attendee) => attendee.id.toString() === id.toString()
+    existEvent.attendance = existEvent.attendance.filter(
+      (attendee) => attendee.id.toString() !== id.toString()
     );
-    existEvent;
-    return res.status(400).json({ message: "Deleted succesfully" });
+    await existEvent.save();
+    return res.status(200).json({ message: "Deleted succesfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Inernal server error" });
+  }
+};
+
+module.exports.attendanceEvent = async (req, res) => {
+  try {
+    const id = req.user.id;
+    const { eventId } = req.params;
+    const { feedback } = req.body;
+
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(400).json({ message: "user not found" });
+    }
+    const existEvent = await eventModel.findById(eventId);
+    if (!existEvent) {
+      return res.status(400).json({ message: "Event doesnot exist" });
+    }
+    const now = new Date();
+    const formattedDate = formatDate(now);
+    const formattedTime = formatTime(now);
+    if (!samedate(formattedDate, existEvent.date)) {
+      if (!sameTime(formattedTime, existEvent.startTime, existEvent.endTime)) {
+        return res.status(400).json({ message: "Time over" });
+      }
+    }
+    await eventModel.findOneAndUpdate(
+      { _id: eventId, "attendance.id": id },
+      { $set: { "attendance.$.isPresent": true } },
+      { new: true }
+    );
+    await eventModel.findOneAndUpdate(
+      { _id: eventId, "attendance.id": id },
+      { $set: { "attendance.$.feedback": feedback } },
+      { new: true }
+    );
+    return res.status(200).json({ message: "Attendance marked" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Inernal server error" });
+  }
+};
+
+module.exports.getAttendance = async (req, res) => {
+  try {
+    const id = req.user.id;
+    const { eventId } = req.params;
+
+    const user = await userModel.findById(id);
+    if (!user || user.role === "student") {
+      return res.status(400).json({ message: "You cant get" });
+    }
+
+    const event = await eventModel.findById(eventId);
+    if (!event) {
+      return res.status(400).json({ message: "Event not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Attendance fetched", attendance: event.attendance });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
