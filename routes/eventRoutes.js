@@ -15,14 +15,14 @@ const {authMiddleware} = require("../middlewares/auth");
 
 const router = express.Router();
 
-router.post("/create", authMiddleware, createEvent);
-router.delete("/dltevnt/:eventId", authMiddleware, deleteEvent);
-router.put("/update/:eventId", authMiddleware, updateEvent);
-router.get("/get/:eventId",  getEventDetails);
-router.get("/gets", authMiddleware, getAllEventDetails);
-router.post("/reg/:eventId", authMiddleware, regEvent);
+router.post("/create-event", authMiddleware, createEvent);
+router.delete("/delete-event/:eventId", authMiddleware, deleteEvent);
+router.put("/update-event/:eventId", authMiddleware, updateEvent);
+router.get("/get-details/:eventId",  getEventDetails);
+router.get("/get-all-details", authMiddleware, getAllEventDetails);
+router.post("/reg-event/:eventId", authMiddleware, regEvent);
 router.post("/attendance/:eventId", authMiddleware, attendanceEvent);
 router.get("/get-attendance/:eventId", authMiddleware, getAttendance)
-router.delete("/dltreg/:eventId", authMiddleware, deleteReg);
+router.delete("/delete-reg/:eventId", authMiddleware, deleteReg);
 
 module.exports = router;
