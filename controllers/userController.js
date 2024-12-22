@@ -30,6 +30,7 @@ module.exports.regUser = async (req, res) => {
       password,
       code,
     });
+
     await newUser.save();
     return res.status(201).json({message: "Registered succesfully"})
   } catch (error) {
@@ -53,7 +54,7 @@ module.exports.loginUser = async (req, res) => {
       return res.status(400).json({message: "Password invalid"})
     }
     
-    const token = jwt.sign({id: existingEmail._id}, JWT_TOKEN, {expiresIn: "1hr"})
+    const token = jwt.sign({id: existingEmail._id}, JWT_TOKEN, {expiresIn: "24hr"})
     return res.status(200).json({message: "Login successfull", token})
   } catch (error) {
     console.log(error)

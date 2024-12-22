@@ -1,11 +1,20 @@
 const venueModel = require("../models/venueModel");
 const userModel = require("../models/userModel");
 
+//authorization
 module.exports.create = async (req, res) => {
   try {
     const { name, location, maxCapacity } = req.body;
     if (!name || !location || !maxCapacity) {
       return res.status(400).json({ message: "All fields are mandatory" });
+    }
+    const id = req.user.id;
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(400).json({ message: "user not found" });
+    }
+    if (user.role === "student") {
+      return res.status(400).json({ message: "U cant create" });
     }
     const existingVenue = await venueModel.findOne({ name });
     if (existingVenue) {
